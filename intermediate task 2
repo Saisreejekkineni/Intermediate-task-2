@@ -1,0 +1,183 @@
+INTIALIZE THE BACKENED PROJECT
+
+mkdir backend
+cd backend
+npm init -y
+
+INITIALIZE DEPENDENCIES
+
+npm install express axios body-parser cors
+
+SETUP SERVER/(BACKEND SERVER)
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const codeRoutes = require('./routes/code');
+
+const app = express();
+
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use('/api/code', codeRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+CREATE ROUTE(BACKEND/ROUTE/CODE.JS
+
+const express = require('express');
+const { executeCode } = require('../controllers/codeController');
+const router = express.Router();
+
+router.post('/execute', executeCode);
+
+module.exports = router;
+
+CREATE CONTROLLER(BACKEND/CONTROLLER/CONTROLLER CODE.JS)
+
+const { execute } = require('../services/executor');
+
+const executeCode = async (req, res) => {
+  const { code, language } = req.body;
+  try {
+    const output = await execute(code, language);
+    res.json({ output });
+  } catch (err) {
+    res.status(500).json({ error: 'Code execution failed' });
+  }
+};
+
+module.exports = { executeCode };
+
+CREATE EXECUTION(BACKEND/EXECUTION/SERVER.JS)
+
+const axios = require('axios');
+
+const execute = async (code, language) => {
+  const response = await axios.post('https://api.example.com/execute', {
+    code,
+    language
+  });
+  return response.data.output;
+};
+
+module.exports = { execute };
+
+FORNTEND SETUP
+INTIALIZE FORNTEND PROJECT
+
+npx create-react-app frontend
+cd frontend
+
+INSTALL DEPENDENCIES
+
+npm install axios
+
+//CREATE EDITOR COMPONENT(frontend/src/components/Editor.js):
+
+import React, { useState } from 'react';
+
+const Editor = ({ code, setCode }) => {
+  return (
+    <textarea
+      value={code}
+      onChange={(e) => setCode(e.target.value)}
+      rows="20"
+      cols="100"
+    />
+  );
+};
+
+export default Editor;
+
+CREATE COMPONENT OUTPUT(frontend/src/components/Output.js)
+
+import React from 'react';
+
+const Output = ({ output }) => {
+  return (
+    <pre>
+      {output}
+    </pre>
+  );
+};
+
+export default Output;
+
+CREATE LANGUAGE SELECTOR COMPONENT (frontend/src/components/LanguageSelector.js):
+
+import React from 'react';
+
+const LanguageSelector = ({ language, setLanguage }) => {
+  return (
+    <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+      <option value="javascript">JavaScript</option>
+      <option value="python">Python</option>
+      <option value="java">Java</option>
+      <!-- Add more languages as needed -->
+    </select>
+  );
+};
+
+export default LanguageSelector;
+
+CREATE MAIN APP COMPONENT(frontend/src/App.js)
+
+import React, { useState } from 'react';
+import axios from 'axios';
+import Editor from './components/Editor';
+import Output from './components/Output';
+import LanguageSelector from './components/LanguageSelector';
+
+const App = () => {
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const [output, setOutput] = useState('');
+
+  const executeCode = async () => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/code/execute', { code, language });
+      setOutput(response.data.output);
+    } catch (error) {
+      setOutput('Error executing code');
+    }
+  };
+
+  return (
+    <div>
+      <LanguageSelector language={language} setLanguage={setLanguage} />
+      <Editor code={code} setCode={setCode} />
+      <button onClick={executeCode}>Run Code</button>
+      <Output output={output} />
+    </div>
+  );
+};
+
+export default App;
+
+UPDATE ENTRY POINT(frontend/src/index.js)
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+START BACKEND
+cd backend
+node server.js
+
+START FORNTEND
+cd frontend
+npm start
+
+
+
+
+
+
+
+
+
